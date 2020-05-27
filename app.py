@@ -4,7 +4,7 @@ from flask import Flask, jsonify
 from flask_restful import Api
 # from flask_jwt import JWT
 from flask_jwt_extended import JWTManager
-from decouple import config
+from dotenv import load_dotenv
 
 # from security import authenticate, identity --- using flask_JWT
 from resources.user import (
@@ -19,12 +19,12 @@ from db import db
 from resources.store import Store, StoreList
 from blacklist import BLACKLIST
 
-
-LOCAL_DB_URL = config('LOCAL_DB_URL') if config('LOCAL_DB_URL') else ''
+load_dotenv()
+LOCAL_DB_URL = os.getenv('LOCAL_DB_URL')
 # LOCAL_DB_URL = 'sqlite:///data.db'
 
 app = Flask(__name__)
-app.secret_key = config('APP_SECRET_KEY')  # app.config['JWT_SECRET_KEY'] = jose # noqa
+app.secret_key = os.getenv('APP_SECRET_KEY')  # app.config['JWT_SECRET_KEY'] = jose # noqa
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', LOCAL_DB_URL)  # noqa
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PROPAGATE_EXCEPTIONS'] = True
