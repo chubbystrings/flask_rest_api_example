@@ -1,5 +1,10 @@
 from flask_restful import Resource, reqparse
-from flask_jwt import jwt_required
+from flask_jwt_extended import (
+    jwt_required, get_jwt_claims,
+    get_jwt_identity,
+    jwt_optional,
+    fresh_jwt_required
+)
 from models.item import ItemModel
 
 
@@ -21,7 +26,7 @@ class Item(Resource):
 
     )
 
-    @jwt_required()
+    @jwt_required
     def get(self, name):
         item = ItemModel.find_by_name(name)
         if item:
@@ -30,7 +35,7 @@ class Item(Resource):
 
         # new_item = next(filter(lambda x: x['name'] == name, items), None)
         # return {"item": new_item}, 200 if new_item else 404
-    @jwt_required()
+    @fresh_jwt_required
     def post(self, name):
         if ItemModel.find_by_name(name):
             return {"message": f"Item with name {name} already exists"}, 400
@@ -44,7 +49,7 @@ class Item(Resource):
 
         return item.json(), 201
 
-    @jwt_required()
+    @jwt_required
     def put(self, name):
         request_data = Item.parser.parse_args()
         item = ItemModel.find_by_name(name)
@@ -57,8 +62,11 @@ class Item(Resource):
         item.save_to_db()
         return item.json(), 200
 
-    @jwt_required()
+    @jwt_required
     def delete(self, name):
+        claims = get_jwt_claims()
+        if not claims["is_admin"]:
+            return {"message": "Admin privilege required"}
         item = ItemModel.find_by_name(name)
         if item is None:
             return {"message": "No item exists with name"}
@@ -69,6 +77,15 @@ class Item(Resource):
 
 
 class ItemList(Resource):
+    @jwt_optional
     def get(self):
+        user_id = get_jwt_identity()
+        items = [item.json() for item in ItemModel.find_all()]
+        if user_id:
+            return {"items": items}, 200
+        return {
+            "items": [item['name'] for item in items],
+            "message": "More data available if you log in"
+        }
         # return {"items": list(map(lambda x: x.json(), ItemModel.query.all()))}  # noqa
-        return {"items": [item.json() for item in ItemModel.query.all()]}
+        # return {"items": [item.json() for item in ItemModel.find_all()]}
