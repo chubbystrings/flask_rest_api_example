@@ -20,7 +20,7 @@ from resources.store import Store, StoreList
 from blacklist import BLACKLIST
 
 
-LOCAL_DB_URL = config('LOCAL_DB_URL')
+LOCAL_DB_URL = config('LOCAL_DB_URL') if config('LOCAL_DB_URL') else ''
 # LOCAL_DB_URL = 'sqlite:///data.db'
 
 app = Flask(__name__)
